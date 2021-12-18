@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher, executor, types
 import sqlite3
 import requests
 from bs4 import BeautifulSoup
+import random
 from config import BOT_TOKEN
 
 # Подключаем БД
@@ -18,14 +19,6 @@ dp = Dispatcher(bot)
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 
-# Словарь библиотеки
-superhero_dict = {'Алимов': 'Математика 10-11 класс --- https://clck.ru/ZPfE3',
-                  'Россум': 'Язык програмирования Питон --- https://clck.ru/ZPfPi',
-                  'Мусин': 'Самоучитель по питону --- https://clck.ru/ZPfRn'}
-
-superhero_dict1 = {'Математика': 'Математика 10-11 класс Алимов---https://clck.ru/ZPfE3',
-                   'Язык програмирования Питон': 'Язык програмирования Питон Россум---https://clck.ru/ZPfPi',
-                   'Самоучитель по питону': 'Самоучитель по питону Муссин---https://clck.ru/ZPfRn'}
 # Список групп РКСИ
 list_group = ["ИС-15", "ИС-16", "ПОКС-32", "4СК-ДО2", "БД-11", "БД-12", "БД-21", "БУ-11", "БУ-21", "БУ-41", "Д-21",
               "Д-31", "Д-41", "ИБА-12", "ИБА-13", "ИБА-14", "ИБА-22", "ИБА-24", "ИБА-25", "ИБА-32", "ИБА-34", "ИБА-34",
@@ -44,6 +37,19 @@ list_group = ["ИС-15", "ИС-16", "ПОКС-32", "4СК-ДО2", "БД-11", "Б
               "СА-21", "СА-23", "СА-24", "СА-25", "СА-26", "СК-21", "СК-31", "УП-21", "УП-31", "УП-41"]
 
 
+# Библиотека
+def biblioteka(author: str, name: str, link: str):
+    bl = cursor.execute('SELECT * FROM Biblioteka WHERE author=?', (author,))
+    bl1 = cursor.execute('SELECT * FROM Biblioteka WHERE name=?', (name,))
+    bl2 = cursor.execute('SELECT * FROM Biblioteka WHERE link=?', (link,))
+    if (bl2.fetchone()) is None:
+        cursor.execute('INSERT INTO Biblioteka (author, name, link) VALUES (?, ?, ?)',
+                       (author, name, link))
+        conn.commit()
+    else:
+        pass
+
+
 # Регистрация пользователя
 def db_table_val(user_id: int, user_name: str, username: str, groupa: str):
     info = cursor.execute('SELECT * FROM Aristotle WHERE user_id=?', (user_id,))
@@ -59,23 +65,26 @@ def db_table_val(user_id: int, user_name: str, username: str, groupa: str):
 @dp.message_handler(commands="start")
 async def cmd_start(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Домашнее задание", "Авторы", "Библиотека", "Новости", "Аккаунт", "Для преподавателей"]
+    buttons = ["📖Домашнее задание📖", "👨‍💻Авторы👨‍💻", "📚Библиотека📚", "📜Новости📜", "⚙️Аккаунт⚙️",
+               "👨‍🏫Для преподавателей👩‍🏫"]
     keyboard.add(*buttons)
-    await message.answer("Введите свою группу, чтобы добавить вас в базу данных.\nНапример: ИС-15 \nВыберите кнопку",
-                         reply_markup=keyboard)
+    await message.answer(
+        "_________🎓Аристотель бот🎓_________\n✅Домашнее задание и библиотека в одном чате. \n✅Введите свою группу, чтобы добавить вас в базу данных.\nНапример: ИС-15 \n✅Выберите кнопку:",
+        reply_markup=keyboard)
 
 
 # Меню
-@dp.message_handler(lambda message: message.text == "Меню")
+@dp.message_handler(lambda message: message.text == "↪️Меню↩️")
 async def cmd_start(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Домашнее задание", "Авторы", "Библиотека", "Новости", "Аккаунт", "Для преподавателей"]
+    buttons = ["📖Домашнее задание📖", "👨‍💻Авторы👨‍💻", "📚Библиотека📚", "📜Новости📜", "⚙️Аккаунт⚙️",
+               "👨‍🏫Для преподавателей👩‍🏫"]
     keyboard.add(*buttons)
     await message.answer("Выберите кнопку", reply_markup=keyboard)
 
 
 # Новости
-@dp.message_handler(lambda message: message.text == "Новости")
+@dp.message_handler(lambda message: message.text == "📜Новости📜")
 async def without_puree(message: types.Message):
     URL = 'https://www.rksi.ru/news'
     HEADERS = {
@@ -91,42 +100,44 @@ async def without_puree(message: types.Message):
     for item in items:
         i += 1
         kol += 1
-        await message.answer(item.text[11:] + "\nhttps://www.rksi.ru/" + soup.select("img")[i].attrs["src"])
+        await message.answer("🧾" + item.text[11:] + "\nhttps://www.rksi.ru/" + soup.select("img")[i].attrs["src"])
         if kol == 3:
             break
 
+
 # Аккаунт
-@dp.message_handler(lambda message: message.text == "Аккаунт")
+@dp.message_handler(lambda message: message.text == "⚙️Аккаунт⚙️")
 async def without_pur1(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Поменять группу", "Удалить аккаунт", "Меню"]
+    buttons = ["💬Поменять группу💬", "❌Удалить аккаунт❌", "↪️Меню↩️"]
     keyboard.add(*buttons)
     await message.answer('Настройки аккаунта', reply_markup=keyboard)
 
 
 # Замена неправильной группы
-@dp.message_handler(lambda message: message.text == "Поменять группу")
+@dp.message_handler(lambda message: message.text == "💬Поменять группу💬")
 async def cmd_start(message: types.Message):
     conn = sqlite3.connect('database.db', check_same_thread=False)
     cursor = conn.cursor()
     people_id = message.from_user.id
     cursor.execute(f"DELETE FROM Aristotle WHERE user_id = {people_id}")
     conn.commit()
-    await message.answer("Введите свою группу")
+    await message.answer("Введите свою группу🖋")
 
 
 # Удалить аккаунт
-@dp.message_handler(lambda message: message.text == "Удалить аккаунт")
+@dp.message_handler(lambda message: message.text == "❌Удалить аккаунт❌")
 async def cmd_start(message: types.Message):
     conn = sqlite3.connect('database.db', check_same_thread=False)
     cursor = conn.cursor()
     people_id = message.from_user.id
     cursor.execute(f"DELETE FROM Aristotle WHERE user_id = {people_id}")
     conn.commit()
-    await message.answer("Аккаунт удалён")
+    await message.answer("🚫Аккаунт удалён🚫")
+
 
 # Для преподавателей
-@dp.message_handler(lambda message: message.text == "Для преподавателей")
+@dp.message_handler(lambda message: message.text == "👨‍🏫Для преподавателей👩‍🏫")
 async def without_pur1(message: types.Message):
     await message.answer('Введите пароль')
 
@@ -135,11 +146,12 @@ async def without_pur1(message: types.Message):
 @dp.message_handler(lambda message: message.text == "8767")
 async def without_pur1(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Меню"]
+    buttons = ["📚Добавить книги в библиотеку📚", "📚Удалить книгу из библиотеки📚", "↪️Меню↩️"]
     keyboard.add(*buttons)
     keyboard = types.InlineKeyboardMarkup()
-    keyboard.add(types.InlineKeyboardButton(text="Отправить домашнее задание", callback_data="instr_dz"))
-    await message.answer('Успешно, выберите кнопку', reply_markup=keyboard)
+    keyboard.add(types.InlineKeyboardButton(text="📖Отправить домашнее задание📖", callback_data="instr_dz"))
+    keyboard.add(types.InlineKeyboardButton(text="📚Отправить книги📚", callback_data="instr_book"))
+    await message.answer('✅Успешно, выберите кнопку', reply_markup=keyboard)
 
 
 # Инструкция для преподавателей
@@ -147,46 +159,43 @@ async def without_pur1(message: types.Message):
 async def without_pur1(call: types.CallbackQuery):
     with open('instr.jpg', 'rb') as photo:
         await call.message.reply_photo(photo=photo,
-                                       caption='Должно быть только 2 пробела!!!\nДомашнее задание отправляем на примере команды:\n "/dz Русский_язык_стр_34_№2 ИС-15"')
+                                       caption='❗️Должно быть только 2 пробела!!!❗️\nДомашнее задание отправляем на примере команды:\n "/dz Русский_язык_стр_34_№2 ИС-15"')
 
 
 # Домашнее задание
-@dp.message_handler(lambda message: message.text == "Домашнее задание")
+@dp.message_handler(lambda message: message.text == "📖Домашнее задание📖")
 async def without_puree(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Смотреть дз", "Меню"]
+    buttons = ["📖Смотреть дз📖", "↪️Меню↩️"]
     keyboard.add(*buttons)
     await message.answer("Выберите кнопку", reply_markup=keyboard)
 
 
-@dp.message_handler(lambda message: message.text == "Смотреть дз")
+@dp.message_handler(lambda message: message.text == "📖Смотреть дз📖")
 async def without_puree(message: types.Message):
-    await message.answer("Русский_Язык_№432-435\nМатематика_№1232-1240\nОбщестово_стр. 243-280")
+    await message.answer(random.choice(["📕", "📗", "📘", "📙"]) + "Русский_Язык_№432-435\n" + random.choice(
+        ["📕", "📗", "📘", "📙"]) + "Математика_№1232-1240\n" + random.choice(
+        ["📕", "📗", "📘", "📙"]) + "Общестово_стр. 243-280")
 
 
 # Проверка на грруппу и добавление данных в БД
 @dp.message_handler(lambda message: message.text in list_group)
 async def get_name(message: types.Message):
-    global action
-    action = message.text
-    if (action.isdigit() == False) and (action.isupper() == True):
-        await message.answer(
-            'Группа изменена. Чтобы поменять группу, перейдите в "Домашнее задание"->"Поменять группу", или введите свою группу')
-        # переменные бд
-        conn = sqlite3.connect('database.db', check_same_thread=False)
-        cursor = conn.cursor()
-        people_id = message.from_user.id
-        cursor.execute(f"DELETE FROM Aristotle WHERE user_id = {people_id}")
-        conn.commit()
+    await message.answer(
+        '✅Группа изменена. Чтобы поменять группу, перейдите в "Домашнее задание"->"Поменять группу", или введите свою группу')
+    # переменные бд
+    conn = sqlite3.connect('database.db', check_same_thread=False)
+    cursor = conn.cursor()
+    people_id = message.from_user.id
+    cursor.execute(f"DELETE FROM Aristotle WHERE user_id = {people_id}")
+    conn.commit()
 
-        us_id = message.from_user.id
-        us_name = message.from_user.first_name
-        usernames = message.from_user.username
-        group = message.text
+    us_id = message.from_user.id
+    us_name = message.from_user.first_name
+    usernames = message.from_user.username
+    group = message.text
 
-        db_table_val(user_id=us_id, user_name=us_name, username=usernames, groupa=group)
-    else:
-        pass
+    db_table_val(user_id=us_id, user_name=us_name, username=usernames, groupa=group)
 
 
 # Добавление Д/З
@@ -215,7 +224,8 @@ async def without_puree(message: types.Message):
                 text4 = text3.split(',')
                 id = text4[1]
                 domzad = list_message[1]
-                await bot.send_message(chat_id=id, text=domzad)
+                await bot.send_message(chat_id=id, text="📖" + domzad)
+            await message.answer("📖✅" + "Домашнее задание успешно отправлено" + "✅📖")
         path = "output.txt"
         os.remove(path)
         path = "output3.txt"
@@ -227,51 +237,99 @@ async def without_puree(message: types.Message):
 
 
 # Авторы
-@dp.message_handler(lambda message: message.text == "Авторы")
+@dp.message_handler(lambda message: message.text == "👨‍💻Авторы👨‍💻")
+async def without_puree(message: types.Message):
+    await message.answer(
+        "_________🎓Аристотель бот🎓_________\n👨‍💻Создатели проекта:\n🥇Бойко Артём🥇\n🥇Сбоев Артём🥇\n🥇Кульпинов Никита🥇")
+
+
+# Библиотека
+# Всё по библиотеке
+# Всё по библиотеке
+# Всё по библиотеке
+@dp.callback_query_handler(text="instr_book")
+async def without_pur1(call: types.CallbackQuery):
+    with open('instr_book.jpg', 'rb') as photo:
+        await call.message.reply_photo(photo=photo,
+                                       caption='❗️Должно быть только 3 пробела!!!❗️\nДомашнее задание отправляем на примере команды:\n "/book Алимов Математика_10-11_класс https://clck.ru/ZPfE3"')
+
+
+@dp.message_handler(commands="book")
+async def without_puree(message: types.Message):
+    book = message.text
+    book_list = book.split(' ')
+    try:
+        author = book_list[1]
+        name = book_list[2]
+        link = book_list[3]
+
+        biblioteka(author=author, name=name, link=link)
+        await message.answer("📚Книга успешно добавлена в Базу данных📚")
+    except IndexError:
+        await message.answer("Неверный формат")
+
+
+# Авторы
+@dp.message_handler(lambda message: message.text == "👨‍💻Авторы👨‍💻")
 async def without_puree(message: types.Message):
     await message.answer("---Аристотель---\nСоздатели проекта:\nБойко Артём\nСбоев Артём\nКульпинов Никита")
 
 
 # Библиотека
-@dp.message_handler(lambda message: message.text == "Библиотека")
+@dp.message_handler(lambda message: message.text == "📚Библиотека📚")
 async def without_puree(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["По автору", "По названию", "Каталог", "Меню"]
+    buttons = ["🧑‍💻По автору🧑‍💻", "📣По названию📣", "🗓Каталог🗓", "↪️Меню↩️"]
     keyboard.add(*buttons)
     await message.answer("Выберите кнопку", reply_markup=keyboard)
 
 
 # По автору
-@dp.message_handler(lambda message: message.text == "По автору")
+@dp.message_handler(lambda message: message.text == "🧑‍💻По автору🧑‍💻")
 async def without_puree(message: types.Message):
-    await message.answer("Введите интересующего автора")
+    await message.answer("🧑‍💻Введите интересующего автора:")
 
 
 # По названию
-@dp.message_handler(lambda message: message.text == "По названию")
+@dp.message_handler(lambda message: message.text == "📣По названию📣")
 async def without_puree(message: types.Message):
-    await message.answer("Введите название книги")
+    await message.answer("📣Введите название книги:\n❗️Пробелов быть не должно❗️")
 
 
 # Каталог
-@dp.message_handler(lambda message: message.text == "Каталог")
+@dp.message_handler(lambda message: message.text == "🗓Каталог🗓")
 async def without_puree(message: types.Message):
-    await message.answer(
-        "Каталог\nМатематика 10-11 класс --- Алимов\nЯзык програмирования Питон --- Россум\nСамоучитель по питону --- Мусин")
+    cursor.execute("SELECT * FROM biblioteka")
+    uds = cursor.fetchall()
+    for row in uds:
+        list = str(row)
+        list2 = list.strip("(").strip(")").strip("'").replace("', '", " ")
+        list3 = list2.split(' ')
+        list4 = list3[:2]
+        list5 = str(list4)
+        list6 = list5.strip("[").strip("]").strip("'").replace("', '", " --- ")
+        await bot.send_message(chat_id=message.chat.id, text=random.choice(["📕", "📗", "📘", "📙"]) + list6)
 
 
 @dp.message_handler(lambda message: message.text)
 async def without_puree(message: types.Message):
     a = message.text
-    if a in superhero_dict:
-        await message.answer(superhero_dict.get(a))
-    elif a in superhero_dict1:
-        await message.answer(superhero_dict1.get(a))
-    else:
-        await message.answer("Такого мы ещё не добавили:(")
+    cursor.execute("SELECT * FROM biblioteka")
+    uds = cursor.fetchall()
+
+    for row in uds:
+        list = str(row)
+        list2 = list.strip("(").strip(")").strip("'").replace("', '", " --- ")
+        if a in row:
+            await message.answer(random.choice(["📕", "📗", "📘", "📙"]) + list2)
+            result = 1
+        else:
+            result = 0
+    if result == 0:
+        await message.answer(
+            "________________Такой фичи мы ещё не добавили:(_____________\n🏆Первое обновление после первого места в хакатоне🏆")
 
 
 if __name__ == "__main__":
     # Запуск бота
     executor.start_polling(dp, skip_updates=True)
-
