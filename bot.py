@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-import asyncio
 import logging
 import time
 import os
@@ -30,18 +28,38 @@ def db_table_val(user_id: int, user_name: str, username: str, groupa: str):
 @dp.message_handler(commands="start")
 async def cmd_start(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Домашнее задание", "Авторы", "Библиотека", "Новости"]
+    buttons = ["Домашнее задание", "Авторы", "Библиотека", "Новости", "Для преподавателей"]
     keyboard.add(*buttons)
-    await message.answer("Выберите кнопку", reply_markup=keyboard)
+    await message.answer("Введите свою группу, чтобы добавить вас в базу данных.\nНапример: ИС-15 \nВыберите кнопку",
+                         reply_markup=keyboard)
 
 
-# Меню
 @dp.message_handler(lambda message: message.text == "Меню")
 async def cmd_start(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Домашнее задание", "Авторы", "Библиотека", "Новости"]
+    buttons = ["Домашнее задание", "Авторы", "Библиотека", "Новости", "Для преподавателей"]
     keyboard.add(*buttons)
     await message.answer("Выберите кнопку", reply_markup=keyboard)
+
+
+@dp.message_handler(lambda message: message.text == "Для преподавателей")
+async def without_pur1(message: types.Message):
+    await message.answer('Введите пароль')
+
+
+@dp.message_handler(lambda message: message.text == "8767")
+async def without_pur1(message: types.Message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Выслать домашнее задание", "Меню"]
+    keyboard.add(*buttons)
+    await message.answer('Успешно, выберите кнопку', reply_markup=keyboard)
+
+
+@dp.message_handler(lambda message: message.text == "Выслать домашнее задание")
+async def without_pur1(message: types.Message):
+    with open('instr.jpg', 'rb') as photo:
+        await message.reply_photo(photo=photo,
+                                  caption='Должно быть только 2 пробела!!!\nДомашнее задание отправляем на примере команды:\n "/dz Русский_язык_стр_34_№2 ИС-15"')
 
 
 # Используем кнопку 1
@@ -77,35 +95,38 @@ async def get_name(message: types.Message):
 
 @dp.message_handler(commands="dz")
 async def without_puree(message: types.Message):
-    dz = message.text
-    list_message = dz.split(' ')
-    print(list_message, file=open("output3.txt", "a"))
-    cursor.execute("SELECT * FROM Aristotle")
-    records = cursor.fetchall()
-    for row in records:
-        print(row, file=open("output.txt", "a"))
-    group_1 = list_message[2]
-    with open('output.txt') as file:
-        for line in file:
-            if group_1 in line:
-                lines = line.replace('\n', '')
-                print(lines, file=open("output1.txt", "a"))
-    time.sleep(1)
-    with open('output1.txt', 'r') as f:
-        for line in f:
-            text1 = list(line)
-            text2 = ' '.join(text1)
-            text3 = text2.replace(' ', '')
-            text4 = text3.split(',')
-            id = text4[1]
-            domzad = list_message[1]
-            await bot.send_message(chat_id=id, text=domzad)
-    path = "output.txt"
-    os.remove(path)
-    path = "output3.txt"
-    os.remove(path)
-    path = "output1.txt"
-    os.remove(path)
+    try:
+        dz = message.text
+        list_message = dz.split(' ')
+        print(list_message, file=open("output3.txt", "a"))
+        cursor.execute("SELECT * FROM Aristotle")
+        records = cursor.fetchall()
+        for row in records:
+            print(row, file=open("output.txt", "a"))
+        group_1 = list_message[2]
+        with open('output.txt') as file:
+            for line in file:
+                if group_1 in line:
+                    lines = line.replace('\n', '')
+                    print(lines, file=open("output1.txt", "a"))
+        time.sleep(1)
+        with open('output1.txt', 'r') as f:
+            for line in f:
+                text1 = list(line)
+                text2 = ' '.join(text1)
+                text3 = text2.replace(' ', '')
+                text4 = text3.split(',')
+                id = text4[1]
+                domzad = list_message[1]
+                await bot.send_message(chat_id=id, text=domzad)
+        path = "output.txt"
+        os.remove(path)
+        path = "output3.txt"
+        os.remove(path)
+        path = "output1.txt"
+        os.remove(path)
+    except:
+        await message.answer('Пользователи из данной группы не зарегестрированы/Домашнее задание неправильного формата')
 
 
 # Используем кнопки 2
