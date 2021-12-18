@@ -1,16 +1,18 @@
+# -*- coding: utf-8 -*-
+import asyncio
 import logging
+import time
+import os
+from aiogram import Bot, Dispatcher, executor, types
 import sqlite3
 import requests
 from bs4 import BeautifulSoup
-from aiogram import Bot, Dispatcher, executor, types
 from config import BOT_TOKEN
 
-# Подключаем БД
 conn = sqlite3.connect('database.db', check_same_thread=False)
 cursor = conn.cursor()
-
 # Объект бота
-bot = Bot(token=BOT_TOKEN)
+bot = Bot(BOT_TOKEN)
 # Диспетчер для бота
 dp = Dispatcher(bot)
 # Включаем логирование, чтобы не пропустить важные сообщения
@@ -20,6 +22,7 @@ logging.basicConfig(level=logging.INFO)
 def db_table_val(user_id: int, user_name: str, username: str, groupa: str):
     cursor.execute('INSERT INTO Aristotle (user_id, user_name, username, groupa) VALUES (?, ?, ?, ?)',
                    (user_id, user_name, username, groupa))
+
     conn.commit()
 
 
@@ -50,6 +53,8 @@ async def without_puree(message: types.Message):
     keyboard.add(*buttons)
     await message.answer("Выберите кнопку", reply_markup=keyboard)
 
+    # Используем кнопки dz для преподов
+
 
 # Проверка на грруппу и добавление данных в бд
 @dp.message_handler(lambda message: message.text.isupper())
@@ -66,6 +71,41 @@ async def get_name(message: types.Message):
         group = message.text
 
         db_table_val(user_id=us_id, user_name=us_name, username=usernames, groupa=group)
+
+    # Используем кнопки 2
+
+
+@dp.message_handler(commands="dz")
+async def without_puree(message: types.Message):
+    dz = message.text
+    list_message = dz.split(' ')
+    print(list_message, file=open("output3.txt", "a"))
+    cursor.execute("SELECT * FROM Aristotle")
+    records = cursor.fetchall()
+    for row in records:
+        print(row, file=open("output.txt", "a"))
+    group_1 = list_message[2]
+    with open('output.txt') as file:
+        for line in file:
+            if group_1 in line:
+                lines = line.replace('\n', '')
+                print(lines, file=open("output1.txt", "a"))
+    time.sleep(1)
+    with open('output1.txt', 'r') as f:
+        for line in f:
+            text1 = list(line)
+            text2 = ' '.join(text1)
+            text3 = text2.replace(' ', '')
+            text4 = text3.split(',')
+            id = text4[1]
+            domzad = list_message[1]
+            await bot.send_message(chat_id=id, text=domzad)
+    path = "output.txt"
+    os.remove(path)
+    path = "output3.txt"
+    os.remove(path)
+    path = "output1.txt"
+    os.remove(path)
 
 
 # Используем кнопки 2
@@ -84,6 +124,56 @@ async def without_puree(message: types.Message):
     await message.answer("Выберите кнопку", reply_markup=keyboard)
 
 
+@dp.message_handler(lambda message: message.text == "По автору")
+async def without_puree(message: types.Message):
+    # Используем кнопку 3.1
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Меню"]
+    keyboard.add(*buttons)
+    await message.answer("Введите интересующего автора", reply_markup=keyboard)
+    a = input()
+    superhero_dict = {'Никита Кульпинов': 'Рекомендации по налаживанию бизнеса',
+                      'Артём Бойко': '5 шагов к счастью',
+                      'Артём Сбоев': 'Танцевальный успех или как танцами покорить сердце девушке'}
+    if a in superhero_dict:
+        print(superhero_dict.get(a))
+    else:
+        print("Такой автор не найден")
+
+
+# Используем кнопки 3
+@dp.message_handler(lambda message: message.text == "По названию")
+async def without_puree(message: types.Message):
+    # Используем кнопку 3.1
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Меню"]
+    keyboard.add(*buttons)
+    await message.answer("Введите название книги", reply_markup=keyboard)
+    b = input()
+    superhero_dict = {'Рекомендации по налаживанию бизнеса': 'Никита Кульпинов',
+                      '5 шагов к счастью': 'Артём Бойко',
+                      'Танцевальный успех или как танцами покорить сердце девушке': 'Артём Сбоев'}
+    if b in superhero_dict:
+        print(superhero_dict.get(b))
+    else:
+        print("Такое название не найдено")
+
+
+@dp.message_handler(lambda message: message.text == "Каталог")
+async def without_puree(message: types.Message):
+    # Используем кнопку 3.1
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Меню"]
+    keyboard.add(*buttons)
+    await message.answer("Введите каталог", reply_markup=keyboard)
+    superhero_dict = {'[0] Никита Кульпинов': 'Рекомендации по налаживанию бизнеса',
+                      '[1] Артём Бойко': '5 шагов к счастью',
+                      '[2] Артём Сбоев': 'Танцевальный успех или как танцами покорить сердце девушке'}
+    print(superhero_dict)
+    a = input()
+    print(superhero_dict[a])
+
+
 # Используем кнопки 4
 @dp.message_handler(lambda message: message.text == "Новости")
 async def without_puree(message: types.Message):
@@ -95,10 +185,11 @@ async def without_puree(message: types.Message):
     resource = requests.get(URL, headers=HEADERS)
     soup = BeautifulSoup(resource.content, "html.parser")
     items = soup.find_all('div', class_='flexnews')
-
+    items1 = soup.select("img")[3].attrs["src"]
+    i = 2
     for item in items:
-        item = item.find("div")
-        await message.answer(item.text[10:])
+        i += 1
+        await message.answer(item.text[11:] + "\nhttps://www.rksi.ru/" + soup.select("img")[i].attrs["src"])
 
 
 # Замена неправильной группы
