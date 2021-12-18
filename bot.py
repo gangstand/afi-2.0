@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-import asyncio
 import logging
 import time
 import os
@@ -9,6 +7,7 @@ import requests
 from bs4 import BeautifulSoup
 from config import BOT_TOKEN
 
+# Подключаем БД
 conn = sqlite3.connect('database.db', check_same_thread=False)
 cursor = conn.cursor()
 # Объект бота
@@ -18,52 +17,106 @@ dp = Dispatcher(bot)
 # Включаем логирование, чтобы не пропустить важные сообщения
 logging.basicConfig(level=logging.INFO)
 
+# Словарь библиотеки
+superhero_dict = {'Никита Кульпинов': 'Рекомендации по налаживанию бизнеса',
+                  'Артём Бойко': '5 шагов к счастью',
+                  'Артём Сбоев': 'Танцевальный успех или как танцами покорить сердце девушке'}
+# Список групп РКСИ
+list_group = ["ИС-15", "ИС-16", "ПОКС-32", "4СК-ДО2", "БД-11", "БД-12", "БД-21", "БУ-11", "БУ-21", "БУ-41", "Д-21",
+              "Д-31", "Д-41", "ИБА-12", "ИБА-13", "ИБА-14", "ИБА-22", "ИБА-24", "ИБА-25", "ИБА-32", "ИБА-34", "ИБА-34",
+              "ИБА-42", "ИБА-44", "ИБТ-11", "ИБТ-12", "ИБТ-13", "ИБТ-14", "ИБТ-21", "ИБТ-23", "ИБТ-31", "ИБТ-33",
+              "ИБТ-41", "ИБТ-43", "ИКС-11", "ИКС-12", "ИКС-13", "ИС-11", "ИС-12", "ИС-13", "ИС-14", "ИС-15", "ИС-16",
+              "ИС-17", "ИС-18", "ИС-21", "КМ-11", "КМ-12", "КМ-21", "КМ-31", "КС-31", "КС-32", "КС-33", "КС-34",
+              "КС-35",
+              "КС-36", "КС-41", "КС-41", "КС-42", "КС-43", "КС-44", "КС-45", "МТ-21", "МТ-22", "МТ-23", "МТ-24",
+              "МТ-31",
+              "МТ-32", "МТ-33", "ПИ-23", "ПИ-31", "ПИ-32", "ПИ-33", "ПИ-41", "ПОКС-21", "ПОКС-22", "ПОКС-23", "ПОКС-24",
+              "ПОКС-25", "ПОКС-26", "ПОКС-27", "ПОКС-31w", "ПОКС-32b", "ПОКС-33w", "ПОКС-34b", "ПОКС-35b", "ПОКС-36w",
+              "ПОКС-37w", "ПОКС-38b", "ПОКС-41", "ПОКС-42", "ПОКС-43", "ПОКС-44", "ПОКС-45", "ПОКС-46", "ПОКС-47",
+              "ПОКС-48",
+              "ПОКС-49", "РТ-11", "РТ-21", "РТ-31", "СА-11", "СА-12", "СА-13", "СА-14", "СА-15", "СА-16", "СА-17",
+              "СА-21",
+              "СА-21", "СА-23", "СА-24", "СА-25", "СА-26", "СК-21", "СК-31", "УП-21", "УП-31", "УП-41"]
 
+
+# Регистрация пользователя
 def db_table_val(user_id: int, user_name: str, username: str, groupa: str):
-    cursor.execute('INSERT INTO Aristotle (user_id, user_name, username, groupa) VALUES (?, ?, ?, ?)',
-                   (user_id, user_name, username, groupa))
+    info = cursor.execute('SELECT * FROM Aristotle WHERE user_id=?', (user_id,))
+    if info.fetchone() is None:
+        cursor.execute('INSERT INTO Aristotle (user_id, user_name, username, groupa) VALUES (?, ?, ?, ?)',
+                       (user_id, user_name, username, groupa))
+        conn.commit()
+    else:
+        pass
 
-    conn.commit()
 
-
-# Создаём кнопки
+# Старт
 @dp.message_handler(commands="start")
 async def cmd_start(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Домашнее задание", "Авторы", "Библиотека", "Новости"]
+    buttons = ["Домашнее задание", "Авторы", "Библиотека", "Новости", "Аккаунт", "Для преподавателей"]
     keyboard.add(*buttons)
-    await message.answer("Выберите кнопку", reply_markup=keyboard)
+    await message.answer("Введите свою группу, чтобы добавить вас в базу данных.\nНапример: ИС-15 \nВыберите кнопку",
+                         reply_markup=keyboard)
 
 
 # Меню
 @dp.message_handler(lambda message: message.text == "Меню")
 async def cmd_start(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Домашнее задание", "Авторы", "Библиотека", "Новости"]
+    buttons = ["Домашнее задание", "Авторы", "Библиотека", "Новости", "Аккаунт", "Для преподавателей"]
     keyboard.add(*buttons)
     await message.answer("Выберите кнопку", reply_markup=keyboard)
 
 
-# Используем кнопку 1
+# Для преподавателей
+@dp.message_handler(lambda message: message.text == "Для преподавателей")
+async def without_pur1(message: types.Message):
+    await message.answer('Введите пароль')
+
+
+# Пароль
+@dp.message_handler(lambda message: message.text == "8767")
+async def without_pur1(message: types.Message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Меню"]
+    keyboard.add(*buttons)
+    keyboard = types.InlineKeyboardMarkup()
+    keyboard.add(types.InlineKeyboardButton(text="Отправить домашнее задание", callback_data="instr_dz"))
+    await message.answer('Успешно, выберите кнопку', reply_markup=keyboard)
+
+
+# Инструкция для преподавателей
+@dp.callback_query_handler(text="instr_dz")
+async def without_pur1(call: types.CallbackQuery):
+    with open('instr.jpg', 'rb') as photo:
+        await call.message.reply_photo(photo=photo,
+                                       caption='Должно быть только 2 пробела!!!\nДомашнее задание отправляем на примере команды:\n "/dz Русский_язык_стр_34_№2 ИС-15"')
+
+
+# Домашнее задание
 @dp.message_handler(lambda message: message.text == "Домашнее задание")
 async def without_puree(message: types.Message):
-    # Используем кнопку 1.1
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Смотреть дз", "Поменять группу", "Меню"]
+    buttons = ["Смотреть дз", "Меню"]
     keyboard.add(*buttons)
     await message.answer("Выберите кнопку", reply_markup=keyboard)
 
-    # Используем кнопки dz для преподов
 
-
-# Проверка на грруппу и добавление данных в бд
-@dp.message_handler(lambda message: message.text.isupper())
+# Проверка на грруппу и добавление данных в БД
+@dp.message_handler(lambda message: message.text in list_group)
 async def get_name(message: types.Message):
     global action
     action = message.text
     if (action.isdigit() == False) and (action.isupper() == True):
-        await message.answer('Группа установлена')
+        await message.answer(
+            'Группа изменена. Чтобы поменять группу, перейдите в "Домашнее задание"->"Поменять группу", или введите свою группу')
         # переменные бд
+        conn = sqlite3.connect('database.db', check_same_thread=False)
+        cursor = conn.cursor()
+        people_id = message.from_user.id
+        cursor.execute(f"DELETE FROM Aristotle WHERE user_id = {people_id}")
+        conn.commit()
 
         us_id = message.from_user.id
         us_name = message.from_user.first_name
@@ -71,84 +124,78 @@ async def get_name(message: types.Message):
         group = message.text
 
         db_table_val(user_id=us_id, user_name=us_name, username=usernames, groupa=group)
+    else:
+        pass
 
-    # Используем кнопки 2
 
-
+# Добавление Д/З
 @dp.message_handler(commands="dz")
 async def without_puree(message: types.Message):
-    dz = message.text
-    list_message = dz.split(' ')
-    print(list_message, file=open("output3.txt", "a"))
-    cursor.execute("SELECT * FROM Aristotle")
-    records = cursor.fetchall()
-    for row in records:
-        print(row, file=open("output.txt", "a"))
-    group_1 = list_message[2]
-    with open('output.txt') as file:
-        for line in file:
-            if group_1 in line:
-                lines = line.replace('\n', '')
-                print(lines, file=open("output1.txt", "a"))
-    time.sleep(1)
-    with open('output1.txt', 'r') as f:
-        for line in f:
-            text1 = list(line)
-            text2 = ' '.join(text1)
-            text3 = text2.replace(' ', '')
-            text4 = text3.split(',')
-            id = text4[1]
-            domzad = list_message[1]
-            await bot.send_message(chat_id=id, text=domzad)
-    path = "output.txt"
-    os.remove(path)
-    path = "output3.txt"
-    os.remove(path)
-    path = "output1.txt"
-    os.remove(path)
+    try:
+        dz = message.text
+        list_message = dz.split(' ')
+        print(list_message, file=open("output3.txt", "a"))
+        cursor.execute("SELECT * FROM Aristotle")
+        records = cursor.fetchall()
+        for row in records:
+            print(row, file=open("output.txt", "a"))
+        group_1 = list_message[2]
+        with open('output.txt') as file:
+            for line in file:
+                if group_1 in line:
+                    lines = line.replace('\n', '')
+                    print(lines, file=open("output1.txt", "a"))
+        time.sleep(1)
+        with open('output1.txt', 'r') as f:
+            for line in f:
+                text1 = list(line)
+                text2 = ' '.join(text1)
+                text3 = text2.replace(' ', '')
+                text4 = text3.split(',')
+                id = text4[1]
+                domzad = list_message[1]
+                await bot.send_message(chat_id=id, text=domzad)
+        path = "output.txt"
+        os.remove(path)
+        path = "output3.txt"
+        os.remove(path)
+        path = "output1.txt"
+        os.remove(path)
+    except:
+        await message.answer('Пользователи из данной группы не зарегестрированы/Домашнее задание неправильного формата')
 
 
-# Используем кнопки 2
+# Авторы
 @dp.message_handler(lambda message: message.text == "Авторы")
 async def without_puree(message: types.Message):
     await message.answer("---Аристотель---\nСоздатели проекта:\nБойко Артём\nСбоев Артём\nКульпинов Никита")
 
 
-# Используем кнопки 3
+# Библиотека
 @dp.message_handler(lambda message: message.text == "Библиотека")
 async def without_puree(message: types.Message):
-    # Используем кнопку 3.1
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
     buttons = ["По автору", "По названию", "Каталог", "Меню"]
     keyboard.add(*buttons)
     await message.answer("Выберите кнопку", reply_markup=keyboard)
 
 
+# По автору
 @dp.message_handler(lambda message: message.text == "По автору")
 async def without_puree(message: types.Message):
-    # Используем кнопку 3.1
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Меню"]
-    keyboard.add(*buttons)
-    await message.answer("Введите интересующего автора", reply_markup=keyboard)
-    a = input()
-    superhero_dict = {'Никита Кульпинов': 'Рекомендации по налаживанию бизнеса',
-                      'Артём Бойко': '5 шагов к счастью',
-                      'Артём Сбоев': 'Танцевальный успех или как танцами покорить сердце девушке'}
-    if a in superhero_dict:
-        print(superhero_dict.get(a))
-    else:
-        print("Такой автор не найден")
+    await message.answer("Введите интересующего автора")
 
 
-# Используем кнопки 3
+@dp.message_handler(lambda message: message.text in superhero_dict)
+async def without_puree(message: types.Message):
+    a = message.text
+    await message.answer(superhero_dict.get(a))
+
+
+# По названию
 @dp.message_handler(lambda message: message.text == "По названию")
 async def without_puree(message: types.Message):
-    # Используем кнопку 3.1
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Меню"]
-    keyboard.add(*buttons)
-    await message.answer("Введите название книги", reply_markup=keyboard)
+    await message.answer("Введите название книги")
     b = input()
     superhero_dict = {'Рекомендации по налаживанию бизнеса': 'Никита Кульпинов',
                       '5 шагов к счастью': 'Артём Бойко',
@@ -159,13 +206,10 @@ async def without_puree(message: types.Message):
         print("Такое название не найдено")
 
 
+# Каталог
 @dp.message_handler(lambda message: message.text == "Каталог")
 async def without_puree(message: types.Message):
-    # Используем кнопку 3.1
-    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    buttons = ["Меню"]
-    keyboard.add(*buttons)
-    await message.answer("Введите каталог", reply_markup=keyboard)
+    await message.answer("Введите каталог")
     superhero_dict = {'[0] Никита Кульпинов': 'Рекомендации по налаживанию бизнеса',
                       '[1] Артём Бойко': '5 шагов к счастью',
                       '[2] Артём Сбоев': 'Танцевальный успех или как танцами покорить сердце девушке'}
@@ -174,7 +218,7 @@ async def without_puree(message: types.Message):
     print(superhero_dict[a])
 
 
-# Используем кнопки 4
+# Новости
 @dp.message_handler(lambda message: message.text == "Новости")
 async def without_puree(message: types.Message):
     URL = 'https://www.rksi.ru/news'
@@ -192,6 +236,15 @@ async def without_puree(message: types.Message):
         await message.answer(item.text[11:] + "\nhttps://www.rksi.ru/" + soup.select("img")[i].attrs["src"])
 
 
+# Аккаунт
+@dp.message_handler(lambda message: message.text == "Аккаунт")
+async def without_pur1(message: types.Message):
+    keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+    buttons = ["Поменять группу", "Удалить аккаунт", "Меню"]
+    keyboard.add(*buttons)
+    await message.answer('Настройки аккаунта', reply_markup=keyboard)
+
+
 # Замена неправильной группы
 @dp.message_handler(lambda message: message.text == "Поменять группу")
 async def cmd_start(message: types.Message):
@@ -201,6 +254,17 @@ async def cmd_start(message: types.Message):
     cursor.execute(f"DELETE FROM Aristotle WHERE user_id = {people_id}")
     conn.commit()
     await message.answer("Введите свою группу")
+
+
+# Удалить аккаунт
+@dp.message_handler(lambda message: message.text == "Удалить аккаунт")
+async def cmd_start(message: types.Message):
+    conn = sqlite3.connect('database.db', check_same_thread=False)
+    cursor = conn.cursor()
+    people_id = message.from_user.id
+    cursor.execute(f"DELETE FROM Aristotle WHERE user_id = {people_id}")
+    conn.commit()
+    await message.answer("Аккаунт удалён")
 
 
 if __name__ == "__main__":
