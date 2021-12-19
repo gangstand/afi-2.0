@@ -173,16 +173,32 @@ async def without_puree(message: types.Message):
 
 @dp.message_handler(lambda message: message.text == "📖Смотреть дз📖")
 async def without_puree(message: types.Message):
-    await message.answer(random.choice(["📕", "📗", "📘", "📙"]) + "Русский_Язык_№432-435\n" + random.choice(
-        ["📕", "📗", "📘", "📙"]) + "Математика_№1232-1240\n" + random.choice(
-        ["📕", "📗", "📘", "📙"]) + "Общестово_стр. 243-280")
+    people_id = str(message.from_user.id)
+    cursor.execute("SELECT * FROM Aristotle")
+    uds = cursor.fetchall()
+    try:
+        for row in uds:
+            list = str(row)
+            list2 = list.strip("(").strip(")").strip("'").replace(", '", ", ").replace("',", ",").replace(", ", " ")
+
+            list3 = list2.split(' ')
+
+            if people_id == list3[1]:
+                gr = list3[4]
+                file_id = f'output{gr}.txt'
+                print(file=open(file_id, "a"))
+                with open(file_id, 'r') as f:
+                    fl = f.read()
+                    await message.answer(fl)
+    except:
+        await message.answer("Домашнее задание для вашей группы отсутствует")
 
 
 # Проверка на грруппу и добавление данных в БД
 @dp.message_handler(lambda message: message.text in list_group)
 async def get_name(message: types.Message):
     await message.answer(
-        '✅Группа изменена. Чтобы поменять группу, перейдите в "Домашнее задание"->"Поменять группу", или введите свою группу')
+        '✅Группа изменена. Чтобы поменять группу, перейдите в "Аккаунт"->"Поменять группу", или введите свою группу')
     # переменные бд
     conn = sqlite3.connect('database.db', check_same_thread=False)
     cursor = conn.cursor()
@@ -201,6 +217,8 @@ async def get_name(message: types.Message):
 # Добавление Д/З
 @dp.message_handler(commands="dz")
 async def without_puree(message: types.Message):
+    global domzad
+    global list_message
     try:
         dz = message.text
         list_message = dz.split(' ')
@@ -216,6 +234,7 @@ async def without_puree(message: types.Message):
                     lines = line.replace('\n', '')
                     print(lines, file=open("output1.txt", "a"))
         time.sleep(1)
+
         with open('output1.txt', 'r') as f:
             for line in f:
                 text1 = list(line)
@@ -223,9 +242,14 @@ async def without_puree(message: types.Message):
                 text3 = text2.replace(' ', '')
                 text4 = text3.split(',')
                 id = text4[1]
+                group = list_message[2]
                 domzad = list_message[1]
                 await bot.send_message(chat_id=id, text="📖" + domzad)
-            await message.answer("📖✅" + "Домашнее задание успешно отправлено" + "✅📖")
+        file_id = f'output{group}.txt'
+        print(domzad, file=open(file_id, "a"))
+        domzad = list_message[1]
+
+        await message.answer("📖✅" + "Домашнее задание успешно отправлено" + "✅📖")
         path = "output.txt"
         os.remove(path)
         path = "output3.txt"
@@ -326,8 +350,7 @@ async def without_puree(message: types.Message):
         else:
             result = 0
     if result == 0:
-        await message.answer(
-            "________________Такой фичи мы ещё не добавили:(_____________\n🏆Первое обновление после первого места в хакатоне🏆")
+        await message.answer("Такой фичи мы ещё не добавили:(\n🏆Первое обновление после первого места в хакатоне🏆")
 
 
 if __name__ == "__main__":
